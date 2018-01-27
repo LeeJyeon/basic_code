@@ -61,29 +61,26 @@ for(i in 1:50){
 
 
 
+library(glmnet)
+#전체로_first
+mart<-train[,-c(1,2,5,27,32)]
 
-#predict
-yhat1<-predict(fit1, s=fit1$lambda.1se, newx=as.matrix(newtest[newtest$회차==1,-c(1:4)]))
-yhat2<-predict(fit2, s=fit2$lambda.1se, newx=as.matrix(test[test$회차==2,-c(1:4)]))
-yhat3<-predict(fit3, s=fit3$lambda.1se, newx=as.matrix(test[test$회차==3,-c(1:4)]))
-yhat4<-predict(fit4, s=fit4$lambda.1se, newx=as.matrix(test[test$회차==4,-c(1:4)]))
-yhat5<-predict(fit5, s=fit5$lambda.1se, newx=as.matrix(test[test$회차==5,-c(1:4)]))
-yhat6<-predict(fit6, s=fit6$lambda.1se, newx=as.matrix(test[test$회차==6,-c(1:4)]))
-yhat7<-predict(fit7, s=fit7$lambda.1se, newx=as.matrix(test[test$회차==7,-c(1:4)]))
-yhat8<-predict(fit8, s=fit8$lambda.1se, newx=as.matrix(newtest[newtest$회차==8,-c(1:4)]))
-yhat9<-predict(fit9, s=fit9$lambda.1se, newx=as.matrix(test[test$회차==9,-c(1:4)]))
-yhat10<-predict(fit10, s=fit10$lambda.1se, newx=as.matrix(test[test$회차==10,-c(1:4)]))
+str(mart)
+first_lm<-lm(TNMS~.,data=mart)
+first_step<-step(first_lm)
 
+str(mart)
+x<-as.matrix(mart[,-2])
+y<-mart[,2]
+lasso<-glmnet(x,y,alpha = 1)
+plot(lasso,xvar = "lambda")
+cv.lasso<-cv.glmnet(x,y,alpha=1)
+plot(cv.lasso)
+cv.lasso
+first_lasso<-glmnet(x,y,alpha=1,lambda=c(cv.lasso$lambda.min,cv.lasso$lambda.1se))
 
-mape1<-mean(abs((test[test$회차==1,3]-yhat1)/test[test$회차==1,3])*100)
-mape2<-mean(abs((test[test$회차==2,3]-yhat1)/test[test$회차==2,3])*100)
-mape3<-mean(abs((test[test$회차==3,3]-yhat1)/test[test$회차==3,3])*100)
-mape4<-mean(abs((test[test$회차==4,3]-yhat1)/test[test$회차==4,3])*100)
-mape5<-mean(abs((test[test$회차==5,3]-yhat1)/test[test$회차==5,3])*100)
-mape6<-mean(abs((test[test$회차==6,3]-yhat1)/test[test$회차==6,3])*100)
-mape7<-mean(abs((test[test$회차==7,3]-yhat1)/test[test$회차==7,3])*100)
-mape8<-mean(abs((test[test$회차==8,3]-yhat1)/test[test$회차==8,3])*100)
-mape9<-mean(abs((test[test$회차==9,3]-yhat1)/test[test$회차==9,3])*100)
-mape10<-mean(abs((test[test$회차==10,3]-yhat1)/test[test$회차==10,3])*100)
+test_x<-test[,-c(1,2,4,5,27,32)]
 
+first_yhat<-cbind(test[,2:3],predict(first_lm,test),predict(first_step,test),predict(first_lasso,as.matrix(test_x)))
 
+write.csv(first_yhat,"전체로.csv")
